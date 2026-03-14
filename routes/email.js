@@ -4,10 +4,11 @@ const { Resend } = require("resend");
 let resendClient;
 function getResend() {
   if (!resendClient) {
-    if (!process.env.RESEND_API_KEY) {
-      throw new Error("RESEND_API_KEY not set. Add it to your environment variables.");
+    const key = process.env.RESEND_API_KEY;
+    if (!key || key.startsWith("re_REPLACE")) {
+      throw new Error("RESEND_API_KEY is not configured. Set it in Render environment variables → https://resend.com/api-keys");
     }
-    resendClient = new Resend(process.env.RESEND_API_KEY);
+    resendClient = new Resend(key);
   }
   return resendClient;
 }

@@ -73,14 +73,13 @@ router.post("/login", async (req, res) => {
     }
 
     const user = await User.findOne({ email: email.trim().toLowerCase() });
-    // Same message for "not found" and "wrong password" — security best practice
     if (!user) {
-      return res.status(401).json({ success: false, message: "Invalid email or password." });
+      return res.status(401).json({ success: false, message: "No account found with this email. Please sign up first.", code: "NO_ACCOUNT" });
     }
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({ success: false, message: "Invalid email or password." });
+      return res.status(401).json({ success: false, message: "Incorrect password. Please try again.", code: "WRONG_PASSWORD" });
     }
 
     signToken(user._id, res);
@@ -121,7 +120,6 @@ router.get("/me", protect, (req, res) => {
   }
 });
 
-module.exports = router;
 
 // ── POST /api/auth/forgot-password ───────────────────────────
 // Generates a reset token, stores hashed version, sends email
@@ -213,3 +211,4 @@ router.post("/reset-password", async (req, res) => {
   }
 });
 
+module.exports = router;
