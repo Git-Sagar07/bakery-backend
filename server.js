@@ -14,8 +14,20 @@ connectDB();
 
 // ── Security headers (helmet)
 app.use(helmet({
-  crossOriginResourcePolicy: false,  // allow images to load cross-origin
+  crossOriginResourcePolicy:      false,
+  crossOriginEmbedderPolicy:      false,
+  contentSecurityPolicy:          false,  // let Razorpay iframe load freely
+  permissionsPolicy: false,               // don't block accelerometer/payment APIs Razorpay needs
 }));
+
+// Explicitly allow payment-related browser APIs that Razorpay needs
+app.use((req, res, next) => {
+  res.setHeader(
+    "Permissions-Policy",
+    "accelerometer=*, payment=*, camera=(), microphone=(), geolocation=()"
+  );
+  next();
+});
 
 // ── Routes
 const authRoutes    = require("./routes/auth");
