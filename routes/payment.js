@@ -33,7 +33,7 @@ function getRazorpay() {
 // Returns { razorpayOrderId, amount, currency, keyId, orderSummary }
 router.post("/create-order", protect, async (req, res) => {
   try {
-    const { couponCode } = req.body;
+    const { couponCode, deliverySlot } = req.body;
 
     const user = await User.findById(req.user._id);
     if (!user) return res.status(404).json({ success: false, message: "User not found." });
@@ -65,7 +65,7 @@ router.post("/create-order", protect, async (req, res) => {
       amount:   grand_total * 100,
       currency: "INR",
       receipt:  `bakery_${Date.now()}`,
-      notes:    { userId: req.user._id.toString(), couponCode: code || "" },
+      notes:    { userId: req.user._id.toString(), couponCode: code || "", deliverySlot: deliverySlot || "ASAP" },
     });
 
     return res.json({
@@ -79,6 +79,7 @@ router.post("/create-order", protect, async (req, res) => {
         address: user.address || {},
         userName: user.name,
         userEmail: user.email,
+        deliverySlot: deliverySlot || "ASAP",
       },
     });
   } catch (err) {
@@ -141,6 +142,8 @@ router.post("/verify", protect, async (req, res) => {
       couponCode:       code,
       status:           "Confirmed",
       placed_at:        new Date(),
+      deliverySlot:     req.body.deliverySlot || "ASAP",
+      statusHistory:    [{ status: "Confirmed", at: new Date() }],
       paymentId:        razorpay_payment_id,
       razorpayOrderId:  razorpay_order_id,
     });

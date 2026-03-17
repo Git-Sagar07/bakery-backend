@@ -21,9 +21,11 @@ const formatOrder = (order) => ({
   gst:         order.gst,
   discount:    order.discount,
   grand_total: order.grand_total,
-  couponCode:  order.couponCode,
-  status:      order.status,
-  placed_at:   order.placed_at,
+  couponCode:    order.couponCode,
+  status:        order.status,
+  placed_at:     order.placed_at,
+  deliverySlot:  order.deliverySlot || "ASAP",
+  statusHistory: order.statusHistory || [],
 });
 
 // ── GET /api/orders?status=active|history ─────────────────────
@@ -48,7 +50,7 @@ router.get("/", protect, async (req, res) => {
 // ── POST /api/orders  { couponCode? } ────────────────────────
 router.post("/", protect, async (req, res) => {
   try {
-    const { couponCode } = req.body;
+    const { couponCode, deliverySlot } = req.body;
 
     // Get user and their cart — guard against deleted accounts
     const user = await User.findById(req.user._id);
@@ -105,9 +107,11 @@ router.post("/", protect, async (req, res) => {
       gst,
       discount,
       grand_total,
-      couponCode: code,
-      status:     "Confirmed",
-      placed_at:  new Date(),
+      couponCode:    code,
+      status:        "Confirmed",
+      placed_at:     new Date(),
+      deliverySlot:  deliverySlot || "ASAP",
+      statusHistory: [{ status: "Confirmed", at: new Date() }],
     });
 
     // Clear cart

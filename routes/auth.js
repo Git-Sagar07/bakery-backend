@@ -5,6 +5,7 @@ const User     = require("../models/User");
 const { protect } = require("../middleware/auth");
 const { validateSignup, validateLogin } = require("../middleware/validate");
 const { sendWelcomeEmail } = require("./email");
+const { authLimiter, resetLimiter } = require("../middleware/rateLimiter");
 
 // Helper to issue JWT cookie
 const signToken = (userId, res) => {
@@ -18,7 +19,7 @@ const signToken = (userId, res) => {
 };
 
 // ── POST /api/auth/signup ─────────────────────────────────────
-router.post("/signup", async (req, res) => {
+router.post("/signup", authLimiter, async (req, res) => {
   try {
     const { name, email, phone, password } = req.body;
 
@@ -63,7 +64,7 @@ router.post("/signup", async (req, res) => {
 });
 
 // ── POST /api/auth/login ──────────────────────────────────────
-router.post("/login", async (req, res) => {
+router.post("/login", authLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -123,7 +124,7 @@ router.get("/me", protect, (req, res) => {
 
 // ── POST /api/auth/forgot-password ───────────────────────────
 // Generates a reset token, stores hashed version, sends email
-router.post("/forgot-password", async (req, res) => {
+router.post("/forgot-password", resetLimiter, async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ success: false, message: "Email is required." });

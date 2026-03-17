@@ -247,7 +247,7 @@ async function sendWelcomeEmail({ toEmail, userName }) {
   return data;
 }
 
-// (exported below with sendPasswordResetEmail)
+
 
 // ── Password Reset Email ──────────────────────────────────────
 async function sendPasswordResetEmail({ toEmail, userName, resetUrl }) {
@@ -309,4 +309,56 @@ async function sendPasswordResetEmail({ toEmail, userName, resetUrl }) {
   return data;
 }
 
-module.exports = { sendOrderConfirmationEmail, sendWelcomeEmail, sendPasswordResetEmail };
+// ── Order Status Update Email ─────────────────────────────────
+async function sendStatusUpdateEmail({ toEmail, userName, orderId, newStatus }) {
+  const FROM_EMAIL = process.env.FROM_EMAIL || "orders@visitmybakery.com";
+  const SITE_URL   = process.env.FRONTEND_URL || "https://visitmybakery.netlify.app";
+
+  const icons = { "Out for Delivery": "🛵", "Delivered": "✅", "Cancelled": "❌" };
+  const icon  = icons[newStatus] || "📦";
+  const msgs  = {
+    "Out for Delivery": "Your order is on its way! Our delivery partner is heading to you.",
+    "Delivered":        "Your order has been delivered. Enjoy your baked treats! 🎉",
+    "Cancelled":        "Your order has been cancelled. If this was unexpected, please contact us.",
+  };
+
+  const html = `
+<!DOCTYPE html><html><body style="margin:0;padding:0;background:#fffaf5;font-family:sans-serif;">
+<table width="100%" cellpadding="0" cellspacing="0" style="padding:30px 0;"><tr><td align="center">
+<table width="600" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(211,84,0,.1);">
+  <tr><td style="background:linear-gradient(135deg,#d35400,#e67e22);padding:32px;text-align:center;">
+    <div style="font-size:48px;">${icon}</div>
+    <h1 style="color:#fff;margin:8px 0 0;font-size:22px;">Order ${newStatus}</h1>
+  </td></tr>
+  <tr><td style="padding:32px;">
+    <h2 style="margin:0 0 12px;color:#222;">Hi ${userName.split(" ")[0]}!</h2>
+    <p style="color:#555;line-height:1.7;">${msgs[newStatus] || `Your order status has been updated to: ${newStatus}`}</p>
+    <div style="background:#fff3e8;border-radius:12px;padding:14px 20px;margin:20px 0;display:inline-block;">
+      <span style="color:#888;font-size:12px;text-transform:uppercase;">Order ID</span><br/>
+      <strong style="color:#d35400;font-size:20px;">${orderId}</strong>
+    </div>
+    <div style="text-align:center;margin-top:20px;">
+      <a href="${SITE_URL}/pages/profile.html?tab=orders"
+         style="background:linear-gradient(135deg,#d35400,#e67e22);color:#fff;padding:12px 28px;border-radius:30px;text-decoration:none;font-weight:700;">
+        View Order →
+      </a>
+    </div>
+  </td></tr>
+  <tr><td style="background:#fdebd0;padding:16px;text-align:center;">
+    <p style="margin:0;color:#888;font-size:12px;">© My Bakery 🧁</p>
+  </td></tr>
+</table></td></tr></table>
+</body></html>`;
+
+  const { data, error } = await getResend().emails.send({
+    from: FROM_EMAIL, to: [toEmail],
+    subject: `${icon} Your order ${orderId} is now: ${newStatus}`,
+    html,
+  });
+  if (error) throw new Error(error.message);
+  return data;
+}
+
+// Update exports — replace old line
+
+module.exports = { sendOrderConfirmationEmail, sendWelcomeEmail, sendPasswordResetEmail, sendStatusUpdateEmail };
